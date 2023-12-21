@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  password String
+  roles String[] @default(["client"])
+  
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  orders Order[]
+  pix Pix?
+  card Card?
+  bankSlip BankSlip?
+
+  @@map("users")
+}
+
+model Category {
+  id String @id @default(uuid())
+  name String
+  
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id Int @id @default(autoincrement())
+  name String
+  description String
+  price String
+  banner String
+  
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  category Category @relation(fields:[category_id], references:[id])
+  category_id String
+  
+  items Item[]
+
+  @@map("products")
+}
+
+model Order {
+  id String @id @default(uuid()) 
+  status Boolean @default(false)
+  amount Float
+  
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  user User @relation(fields:[user_id], references:[id])
+  user_id String 
+
+  items Item[]
+  payment PaymentTypes?
+
+  @@map("orders")
+}
+
+model Item {
+  id String @id @default(uuid()) 
+  quantity Int
+  subtotal Float
+  
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+  
+  order Order @relation(fields:[order_id], references:[id])
+  product Product @relation(fields:[product_id], references:[id])
+  
+  order_id String
+  product_id Int
+  
+  @@map("items")
+}
+
+model PaymentTypes {
+  id String @id @default(uuid()) 
+  paymentType String
+  status Boolean @default(false)
+  
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  order Order @relation(fields:[order_id], references:[id])
+  order_id String @unique
+   
+  pix Pix?
+  card Card?
+  bankSlip BankSlip?
+
+  @@map("payments")
+}
+
+model Pix {
+  id String @id @default(uuid())  
+  pixKey String
+ 
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  user User @relation(fields:[user_id], references:[id])
+  payment PaymentTypes @relation(fields:[payment_id],references:[id])
+  
+  user_id String @unique
+  payment_id String @unique
+  
+  @@map("pix")
+}
+
+model Card {
+  id String @id @default(uuid()) 
+  name String
+  number String
+  code Int
+  expiresMonth Int
+  expiresYear Int
+
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  user User @relation(fields:[user_id], references:[id])
+  payment PaymentTypes @relation(fields:[payment_id],references:[id])
+  
+  user_id String @unique
+  payment_id String @unique
+
+  @@map("card")
+}
+
+model BankSlip { 
+  id String @id @default(uuid()) 
+  barCode String
+  dueDate DateTime
+
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  user User @relation(fields:[user_id], references:[id])
+  payment PaymentTypes @relation(fields:[payment_id],references:[id])
+  
+  user_id String @unique
+  payment_id String @unique
+
+  @@map("bankSlip")
+}
